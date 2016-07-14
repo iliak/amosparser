@@ -46,10 +46,6 @@ def readExtension(stream):
         return "Extension {} unknown" % extensions[number]
 
 
-
-    # return "Ext #{}:{} not found !".format(number, id)
-
-
     return extension["tokens"][id]
 
 
