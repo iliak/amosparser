@@ -1,0 +1,9 @@
+http://www.exotica.org.uk/wiki/AMOS_file_formats
+http://www.amigacoding.com/index.php/AMOS:Extensions
+http://www.amigacoding.com/index.php/AMOS:File_Formats
+
+https://github.com/endavid/AMOSaver
+http://alvyn.sourceforge.net/amos_file_formats.html
+https://github.com/dannystaple/AmosPy
+
+http://fileformats.archiveteam.org/wiki/AMOS_BASIC_tokenized_file
