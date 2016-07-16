@@ -28,8 +28,13 @@ class LibFile:
 
             # AP20 present ?
             tag = struct.unpack("4s", stream.read(4))[0]
-            if tag.decode("ascii") != "AP20":
-                stream.seek(-4, 1)
+            stream.seek(-4, 1)
+            try:
+                if tag.decode("ascii") != "AP20":
+                    print("AMOS Pro extension")
+            except:
+                print("Not an AMOS Pro extension")
+
 
             # Base offset of all above offsets
             base = stream.tell()
@@ -44,12 +49,13 @@ class LibFile:
                 return
 
             # The magic 3 bytes is dc.w 0 and dc.l 0
+                previoustoken = ""
             while stream.tell() <= base + dummysize + tokensize:
 
-                inst = struct.unpack(">h", stream.read(2))[0]
-                func = struct.unpack(">h", stream.read(2))[0]
+                inst = struct.unpack(">H", stream.read(2))[0]
+                func = struct.unpack(">H", stream.read(2))[0]
                 if inst == 0 and func == 0:
-                    break;
+                    break
 
                 token = Token()
                 token.Instruction = inst
@@ -59,7 +65,16 @@ class LibFile:
                 c = 0
                 while c < 0x80:
                     c = struct.unpack("B", stream.read(1))[0]
-                    token.Name += chr(c & 0x7F)
+
+                    if c == 0x80:
+                        token.Name = previoustoken
+                    else:
+                        token.Name += chr(c & 0x7F)
+
+                if token.Name[0] == "!":
+                    token.Name = token.Name[1:]
+                    previoustoken = token.Name
+
 
                 # Read Parameters
                 while True:
@@ -68,15 +83,54 @@ class LibFile:
                     if c > 0:
                         token.Param += chr(c)
                     else:
-                        token.Return = c
                         break
-
-
-                print("{}".format(token.Name))
 
                 if stream.tell() % 2 == 1:
                     stream.read(1)
 
+                if token.Instruction != 0xFFFF:
+                    print("I [0x{:04}]: ".format(token.Instruction), end="")
+                else:
+                    print("F [0x{:04}]: ".format(token.Function), end="")
+
+                if token.Param[0] == '0':
+                    print("int = ", end="")
+                elif token.Param[0] == '1':
+                    print("float = ", end="")
+                elif token.Param[0] == '2':
+                    print("string = ", end="")
+
+                print("{} ".format(token.Name), end="")
+
+                if len(token.Param) > 1:
+                    if token.Function != 0xFFFF:
+                        print("(", end="")
+
+                    for c in token.Param[1:]:
+                        if c == "0":
+                            print("int ", end="")
+                        elif c == "1":
+                            print("float ", end="")
+                        elif c == "2":
+                            print("string ", end="")
+                        elif c == "3":
+                            print("int/string ", end="")
+                        elif c == "4":
+                            print("int/float ", end="")
+                        elif c == "5":
+                            print("angle ", end="")
+                        elif c in [",", 't']:
+                            print("TO ", end="")
+
+                    if token.Function != 0xFFFF:
+                        print(")", end="")
+
+
+
+                print()
+
+
+                t = 0
             return
 
     pass
