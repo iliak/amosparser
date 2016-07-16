@@ -1,3 +1,4 @@
+from enum import Enum
 import struct
 
 class Point:
@@ -10,19 +11,49 @@ class Size:
     Height = 0
 
 
+# Memory types
+class MemoryLocation(Enum):
+    Chip = 0
+    Fast = 1
+    Unknown = 2
+
+
 class Bank:
+    Tag = None
+    Memory = MemoryLocation.Unknown
 
-    pass
 
+class MemoryBank(Bank):
+    Size = 0
+    Name = ""
+    Data = None
+    Id = 0
 
-class SpriteBank(Bank):
+    def load(self, stream):
+        self.Id = struct.unpack(">H", stream.read(2))[0]
+        self.Memory = MemoryLocation(struct.unpack(">H", stream.read(2))[0])
+        self.Size = struct.unpack(">I", stream.read(4))[0] & 0x0FFFFFFF
+        self.Name = struct.unpack("8s", stream.read(8))[0].decode("ascii")
 
-    pass
+        self.Data = stream.read(self.Size - 8)
 
 
 class IconBank(Bank):
+    Palette = None
+    Sprites = []
 
-    pass
+    def load(self, stream):
+
+        count = struct.unpack(">H", stream.read(2))[0]
+
+        for id in range(0, count):
+            sprite = Sprite()
+            sprite.load(stream)
+
+            self.Sprites.append(sprite)
+
+        self.Palette = struct.unpack(">32H", stream.read(64))
+        self.Memory = MemoryLocation.Chip
 
 
 class Sprite:

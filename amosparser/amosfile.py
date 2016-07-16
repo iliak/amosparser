@@ -1,9 +1,8 @@
 import io
-import struct
-from enum import Enum
 
-from .tokens import tokens
 from .bank import *
+from .tokens import tokens
+
 
 class AmosFile:
 
@@ -50,7 +49,7 @@ class AmosFile:
         :param stream: stream data
         :return: True on success
         """
-        self.Version = struct.unpack('16s', stream.read(16))[0].decode("ascii")
+        self.Version = struct.unpack('>16s', stream.read(16))[0].decode("ascii")
 
         if self.Version not in self.HEADERS:
             print("Bad amos source code header (got \"" + self.Version + ") !")
@@ -90,7 +89,8 @@ class AmosFile:
                         self.Source.write(sub[0] + data)
 
                 except KeyError:
-
+                    print("Unknown token 0x{:04x}".format(tokenid))
+                    self.Source.write("[0x{:04x}]". format(tokenid))
                     pass
 
         return
@@ -107,50 +107,26 @@ class AmosFile:
 
         count = struct.unpack(">H", stream.read(2))[0]
 
-
         for i in range(0, count):
             tag = struct.unpack('4s', stream.read(4))[0]
             tag = tag.decode("ascii")
 
+            bnk = None
+
             # Sprite or Icon bank
             if tag in ("AmSp", "AmIc"):
-                count = struct.unpack(">H", stream.read(2))[0]
+                bnk = IconBank()
 
-                self.Banks[i] = []
-                for id in range(0, count):
-                    sprite = Sprite()
-                    sprite.load(stream)
-
-                    self.Banks[i].append(sprite)
-
-                palette = struct.unpack(">32H", stream.read(64))
-
+            # Memory bank
             elif tag == "AmBk":
-                id = struct.unpack(">H", stream.read(2))[0]
-                loc = struct.unpack(">H", stream.read(2))[0]
-                length = struct.unpack(">i", stream.read(4))[0] & 0x0FFFFFFF
-                name = struct.unpack("8s", stream.read(8))[0].decode("ascii")
-
-                stream.read(length - 8)
+                bnk = MemoryBank()
 
             # Common
             else:
-                self.readbank(stream)
+                print("Unknown bank type \"{}\"!".format(tag))
 
-        return False
-
-    def readbank(self, stream):
-
-        pass
-
-
-    def readiconbank(self, stream):
+            bnk.load(stream)
+            bnk.Tag = tag
+            self.Banks[i] = bnk
 
         return
-
-
-# Memory types
-class MemoryLocation(Enum):
-    Chip = 0
-    Fast = 1
-    unknown = 2
