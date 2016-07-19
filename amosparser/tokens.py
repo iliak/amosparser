@@ -38,6 +38,8 @@ def readFloat(stream):
 def readExtension(stream):
     slot, pad, token = struct.unpack(">BBh", stream.read(4))
 
+    print("[Ext: {} - token: 0x{:04X}]".format(slot, token))
+
     if not extensions[slot]:
         return "Uninstalled extension #".format(slot)
 

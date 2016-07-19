@@ -89,10 +89,11 @@ class AmosFile:
                         self.Source.write(sub[0] + data)
 
                 except KeyError:
-                    print("Unknown token 0x{:04x}".format(tokenid))
+                    # print("Unknown token 0x{:04x}".format(tokenid))
                     self.Source.write("[0x{:04x}]". format(tokenid))
                     pass
 
+        print(self.Source.getvalue())
         return
 
     def readbanks(self, stream):
